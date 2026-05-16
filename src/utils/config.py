@@ -30,9 +30,14 @@ RETRIEVAL_TOP_K = 4
 
 # 重排序参数（CrossEncoder）
 RERANK_ENABLED = True           # 是否启用重排序
-RERANK_MODEL_NAME = "BAAI/bge-reranker-base"  # CrossEncoder 模型
+RERANK_MODEL_NAME = str(PROJECT_ROOT / "models" / "BAAI" / "bge-reranker-v2-m3")
 RERANK_INITIAL_TOP_K = 10       # 向量检索先取 Top-N，再重排序
 RERANK_FINAL_TOP_K = 4          # 重排序后返回 Top-N
+
+# MultiQuery 查询重写参数
+MULTI_QUERY_ENABLED = False      # 是否启用多查询重写
+MULTI_QUERY_COUNT = 3           # 生成几个变体问句
+MULTI_QUERY_TOP_K = 5           # 每个变体检索几条
 
 # DeepSeek API 配置
 DEEPSEEK_BASE_URL = "https://api.deepseek.com"
