@@ -148,7 +148,7 @@ if "messages" not in st.session_state:
 
 # 渲染历史消息
 for msg in st.session_state.messages:
-    with st.chat_message(msg["role"], avatar="🧑" if msg["role"] == "user" else "◈"):
+    with st.chat_message(msg["role"], avatar="🧑" if msg["role"] == "user" else "🤖"):
         st.markdown(msg["content"])
         if msg["role"] == "assistant" and "sources" in msg:
             with st.expander(f"📎 引用来源（{len(msg['sources'])}条）"):
