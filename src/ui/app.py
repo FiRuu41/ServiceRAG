@@ -177,7 +177,9 @@ if prompt:
 
             retrieved = retrieve_with_pipeline(prompt, vs, bm25)
             placeholder.markdown("_正在生成答案..._")
-            answer = generate_answer(prompt, retrieved)
+            # 传入历史（不含当前用户消息和系统占位）
+            history = st.session_state.messages[:-1]
+            answer = generate_answer(prompt, retrieved, history=history)
             elapsed = time.time() - t0
 
             placeholder.markdown(answer)

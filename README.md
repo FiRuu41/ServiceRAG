@@ -80,6 +80,21 @@ python evaluate_compare.py
 - [x] CrossEncoder 重排序
 - [x] BM25 混合检索
 - [x] MultiQuery 查询重写
-- [x] Streamlit 界面
-- [ ] 多轮对话支持
-- [ ] RAGAS 自动评估
+- [x] Streamlit 界面（ChatGPT 式聊天）
+- [x] 多轮对话支持
+- [x] RAGAS 自动评估
+
+## RAGAS 自动评估
+
+支持用 LLM 自动打分代替人工评分，评估四个维度：
+
+```bash
+python -m src.evaluation.evaluate_ragas
+```
+
+- **faithfulness** 忠实度：答案是否忠于检索资料
+- **answer_relevancy** 相关性：答案是否切中问题
+- **context_precision** 上下文精确度：检索质量
+- **context_recall** 上下文召回：是否找到答案所需信息
+
+结果保存在 `logs/ragas_eval.csv`
