@@ -7,6 +7,7 @@ langchain-chroma~=0.2.6
 chromadb
 sentence-transformers
 pypdf
+docx2txt
 python-dotenv~=1.2.1
 python-docx~=1.1.2
 streamlit
