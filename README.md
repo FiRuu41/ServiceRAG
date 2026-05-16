@@ -81,6 +81,7 @@ python evaluate_compare.py
 
 # RAGAS 自动评估（4 维分数）
 python -m src.evaluation.evaluate_ragas
+
 ```
 
 RAGAS 评估 4 个维度：
