@@ -28,6 +28,12 @@ ENCODE_KWARGS = {"normalize_embeddings": True}
 # 检索参数
 RETRIEVAL_TOP_K = 4
 
+# 重排序参数（CrossEncoder）
+RERANK_ENABLED = True           # 是否启用重排序
+RERANK_MODEL_NAME = "BAAI/bge-reranker-base"  # CrossEncoder 模型
+RERANK_INITIAL_TOP_K = 10       # 向量检索先取 Top-N，再重排序
+RERANK_FINAL_TOP_K = 4          # 重排序后返回 Top-N
+
 # DeepSeek API 配置
 DEEPSEEK_BASE_URL = "https://api.deepseek.com"
 DEEPSEEK_MODEL = "deepseek-v4-flash"

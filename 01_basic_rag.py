@@ -14,11 +14,9 @@ from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
 # 加载 PDF 文档
-pdf_loader = PyPDFLoader("data/raw/员工手册.pdf")
-docs1 = pdf_loader.load()
-loader2 = PyPDFLoader("data/raw/网络与信息化常见问题指导手册.pdf")
+loader2 = PyPDFLoader("data/raw/HR_T_HR-00_001_复星旅文集团员工手册_V5.0.pdf")
 docs2 = loader2.load()
-pdf_documents = docs1 + docs2
+pdf_documents = docs2
 
 # 文本分块
 # 目的：把长文本拆成更小的 chunk 以便嵌入（embedding）与检索。
