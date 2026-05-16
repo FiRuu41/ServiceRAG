@@ -26,13 +26,13 @@ EMBEDDING_MODEL_KWARGS = {"device": "cpu"}
 ENCODE_KWARGS = {"normalize_embeddings": True}
 
 # 检索参数
-RETRIEVAL_TOP_K = 4
+RETRIEVAL_TOP_K = 3
 
 # 重排序参数（CrossEncoder）
 RERANK_ENABLED = True           # 是否启用重排序
 RERANK_MODEL_NAME = str(PROJECT_ROOT / "models" / "BAAI" / "bge-reranker-v2-m3")
 RERANK_INITIAL_TOP_K = 10       # 向量检索先取 Top-N，再重排序
-RERANK_FINAL_TOP_K = 4          # 重排序后返回 Top-N
+RERANK_FINAL_TOP_K = 3         # 重排序后返回 Top-N
 
 # MultiQuery 查询重写参数
 MULTI_QUERY_ENABLED = False     # 是否启用多查询重写（可能引入噪音）      # 是否启用多查询重写

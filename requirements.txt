@@ -10,3 +10,4 @@ pypdf
 python-dotenv~=1.2.1
 python-docx~=1.1.2
 streamlit
+rank_bm25

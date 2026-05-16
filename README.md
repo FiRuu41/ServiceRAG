@@ -7,7 +7,7 @@
 ```
 文档 → 切分 → Embedding (BGE-Chinese) → Chroma 向量库
                                             ↓
-用户提问 → MultiQuery 重写 → 向量检索 + BM25 混合 → CrossEncoder 重排序 → LLM 生成答案
+用户提问 → 向量检索 + BM25 混合 → CrossEncoder 重排序 → LLM 生成答案
 ```
 
 | 层级 | 技术 |
@@ -16,7 +16,7 @@
 | 文档处理 | PyPDFLoader + RecursiveCharacterTextSplitter |
 | 嵌入模型 | BAAI/bge-base-zh-v1.5（本地） |
 | 向量库 | Chroma（本地） |
-| 检索优化 | MultiQuery + BM25 + CrossEncoder(bge-reranker-v2-m3) |
+| 检索优化 | BM25 + CrossEncoder(bge-reranker-v2-m3) |
 | 生成模型 | DeepSeek-V4（API） |
 | 界面 | Streamlit |
 

@@ -1,5 +1,5 @@
 """
-ServiceRAG — 企业服务台知识库问答系统
+ServiceRAG — 企业知识库智能问答系统
 运行方式：streamlit run src/ui/app.py
 """
 import os
@@ -11,129 +11,92 @@ from datetime import datetime
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 import streamlit as st
-from src.utils.config import PROJECT_ROOT, CHROMA_PERSIST_DIR
-from src.document_loader.load_local import load_pdfs
-from src.processing.splitter import split_documents
-from src.processing.embed_store import load_vectorstore, create_vectorstore
-from src.retrieval.pipeline import retrieve_with_pipeline
-from src.retrieval.bm25_retriever import build_bm25_index
-from src.generation.answer_gen import generate_answer
 
-# ── 页面配置 ──
 st.set_page_config(
     page_title="ServiceRAG · 企业知识库问答",
-    page_icon="◈",
-    layout="wide",
-    initial_sidebar_state="collapsed",
+    page_icon="📚",
+    layout="centered",
+    initial_sidebar_state="expanded",
 )
 
-# ── 自定义样式 ──
+# ── 样式 ──
 st.markdown("""
 <style>
-    /* 隐藏 Streamlit 默认装饰 */
     #MainMenu, footer, header {visibility: hidden;}
+    .block-container { padding-top: 1.5rem; padding-bottom: 6rem; max-width: 820px; }
 
-    /* 主容器 */
-    .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-        max-width: 960px;
+    /* 标题区 */
+    .app-header {
+        text-align: center;
+        padding: 0.5rem 0 1.5rem 0;
+        border-bottom: 1px solid #f0f0f0;
+        margin-bottom: 1.5rem;
     }
+    .app-title {
+        font-size: 1.5rem; font-weight: 700; color: #1a1a1a; letter-spacing: -0.02em;
+    }
+    .app-subtitle { font-size: 0.85rem; color: #999; margin-top: 0.25rem; }
 
-    /* 标题 */
-    .main-title {
-        font-size: 2.2rem;
-        font-weight: 700;
-        letter-spacing: -0.02em;
-        color: #1a1a1a;
-        margin-bottom: 0.25rem;
+    /* 引用来源样式 */
+    .source-chip {
+        display: inline-block;
+        background: #f1f3f5;
+        border: 1px solid #e8eaec;
+        border-radius: 6px;
+        padding: 0.3rem 0.7rem;
+        font-size: 0.78rem;
+        color: #555;
+        margin: 0.25rem 0.3rem 0 0;
     }
-    .main-subtitle {
-        font-size: 0.95rem;
-        color: #888;
-        font-weight: 400;
-        margin-bottom: 2rem;
-    }
-
-    /* 答案卡片 */
-    .answer-card {
-        background: #f8f9fa;
-        border-radius: 12px;
-        padding: 1.5rem 1.8rem;
-        margin-top: 1rem;
-        border: 1px solid #e8e8ea;
-        line-height: 1.8;
-        font-size: 1rem;
-    }
-    .answer-label {
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: #999;
-        margin-bottom: 0.5rem;
+    .source-detail {
+        background: #fafbfc;
+        border-left: 3px solid #1a1a1a;
+        padding: 0.6rem 0.9rem;
+        font-size: 0.82rem;
+        color: #555;
+        line-height: 1.6;
+        margin-top: 0.5rem;
+        border-radius: 0 6px 6px 0;
     }
 
-    /* 指标栏 */
-    .metrics-row {
-        display: flex;
-        gap: 2rem;
-        margin-top: 1.5rem;
-        padding-top: 1rem;
-        border-top: 1px solid #eee;
-    }
-    .metric-item {
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-        font-size: 0.85rem;
-        color: #888;
-    }
-    .metric-value {
-        font-weight: 600;
-        color: #1a1a1a;
-    }
-
-    /* 输入区 */
-    .stTextInput > div > div > input {
-        border-radius: 10px;
-        border: 1.5px solid #e0e0e0;
-        padding: 0.7rem 1rem;
-        font-size: 1rem;
-    }
-    .stTextInput > div > div > input:focus {
-        border-color: #333;
-        box-shadow: none;
-    }
-
-    /* 按钮 */
-    .stButton > button {
-        border-radius: 10px;
-        background: #1a1a1a;
-        color: white;
-        font-weight: 600;
-        padding: 0.5rem 2rem;
-        border: none;
-        transition: background 0.2s;
-    }
-    .stButton > button:hover {
-        background: #333;
+    .meta-line {
+        font-size: 0.75rem; color: #999;
+        margin-top: 0.5rem;
     }
 </style>
 """, unsafe_allow_html=True)
 
+
 # ── 系统初始化 ──
-@st.cache_resource(show_spinner=False)
 def init_system():
-    if os.path.exists(CHROMA_PERSIST_DIR) and os.listdir(CHROMA_PERSIST_DIR):
-        vs = load_vectorstore()
-    else:
-        vs = create_vectorstore(split_documents(load_pdfs()))
-    docs = split_documents(load_pdfs())
-    bm25 = build_bm25_index(docs)
-    return vs, bm25
+    if "system_ready" not in st.session_state:
+        from src.utils.config import CHROMA_PERSIST_DIR
+        from src.document_loader.load_local import load_pdfs
+        from src.processing.splitter import split_documents
+        from src.processing.embed_store import load_vectorstore, create_vectorstore
+        from src.retrieval.bm25_retriever import build_bm25_index
+
+        with st.status("正在初始化系统...", expanded=True) as status:
+            st.write("加载向量库...")
+            if os.path.exists(CHROMA_PERSIST_DIR) and os.listdir(CHROMA_PERSIST_DIR):
+                vs = load_vectorstore()
+            else:
+                vs = create_vectorstore(split_documents(load_pdfs()))
+            st.write("构建 BM25 索引...")
+            docs = split_documents(load_pdfs())
+            bm25 = build_bm25_index(docs)
+            st.write("✓ 就绪")
+            status.update(label="系统就绪", state="complete", expanded=False)
+
+        st.session_state.vs = vs
+        st.session_state.bm25 = bm25
+        st.session_state.system_ready = True
+        st.session_state.messages = []
+    return st.session_state.vs, st.session_state.bm25
 
 
 def log_qa(question, answer, sources, elapsed):
+    from src.utils.config import PROJECT_ROOT
     p = os.path.join(PROJECT_ROOT, "logs", "qa_history.csv")
     os.makedirs(os.path.dirname(p), exist_ok=True)
     exists = os.path.exists(p)
@@ -144,55 +107,102 @@ def log_qa(question, answer, sources, elapsed):
         w.writerow([datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                      question, answer, " | ".join(sources), f"{elapsed:.1f}s"])
 
-# ── 页面渲染 ──
-st.markdown('<div class="main-title">知识库问答</div>', unsafe_allow_html=True)
-st.markdown('<div class="main-subtitle">基于内部文档的智能检索与生成 · 所有答案均溯源至原始资料</div>',
-            unsafe_allow_html=True)
+
+# ── 侧边栏：历史 + 操作 ──
+with st.sidebar:
+    st.markdown("### 📚 ServiceRAG")
+    st.caption("企业内部知识库智能问答")
+    st.markdown("---")
+
+    if st.button("➕ 新对话", use_container_width=True):
+        st.session_state.messages = []
+        st.rerun()
+
+    st.markdown("**对话历史**")
+    if "messages" in st.session_state and st.session_state.messages:
+        user_msgs = [m for m in st.session_state.messages if m["role"] == "user"]
+        for i, m in enumerate(user_msgs):
+            st.caption(f"• {m['content'][:30]}{'...' if len(m['content']) > 30 else ''}")
+    else:
+        st.caption("_暂无对话_")
+
+    st.markdown("---")
+    st.caption("**数据源**")
+    st.caption("• 员工手册")
+    st.caption("• 个人信息保护法")
+
+
+# ── 主页面 ──
+st.markdown("""
+<div class="app-header">
+    <div class="app-title">知识库问答</div>
+    <div class="app-subtitle">所有答案均溯源至内部文档</div>
+</div>
+""", unsafe_allow_html=True)
 
 vs, bm25 = init_system()
 
-col_input, col_btn = st.columns([5, 1])
-with col_input:
-    question = st.text_input(
-        "问题",
-        placeholder="输入你的问题，例如：员工试用期是多长时间？",
-        label_visibility="collapsed",
-    )
-with col_btn:
-    submitted = st.button("提问", type="primary", use_container_width=True)
+# 初始化对话
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-if submitted and question.strip():
-    t0 = time.time()
-    try:
-        retrieved = retrieve_with_pipeline(question, vs, bm25)
-        answer = generate_answer(question, retrieved)
-        elapsed = time.time() - t0
+# 渲染历史消息
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"], avatar="🧑" if msg["role"] == "user" else "◈"):
+        st.markdown(msg["content"])
+        if msg["role"] == "assistant" and "sources" in msg:
+            with st.expander(f"📎 引用来源（{len(msg['sources'])}条）"):
+                for i, src in enumerate(msg["sources"]):
+                    st.markdown(f'<div class="source-detail"><b>来源 {i+1}</b><br>{src}</div>',
+                                unsafe_allow_html=True)
+            st.markdown(f'<div class="meta-line">⏱ {msg.get("elapsed", "?")}s</div>',
+                        unsafe_allow_html=True)
 
-        # 答案卡片
-        st.markdown(f"""
-        <div class="answer-card">
-            <div class="answer-label">回答</div>
-            {answer}
-        </div>
-        """, unsafe_allow_html=True)
+# 聊天输入框（固定底部）
+prompt = st.chat_input("输入你的问题，例如：员工试用期是多长时间？")
 
-        # 指标栏
-        cols = st.columns(3)
-        cols[0].metric("检索来源", f"{len(retrieved)} 条")
-        cols[1].metric("处理耗时", f"{elapsed:.1f}s")
-        cols[2].metric("文档范围", "2 份")
+if prompt:
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user", avatar="🧑"):
+        st.markdown(prompt)
 
-        # 引用来源
-        with st.expander("查看引用来源"):
-            for i, doc in enumerate(retrieved):
-                st.caption(f"来源 {i+1}")
-                st.text(doc.page_content[:300])
+    with st.chat_message("assistant", avatar="🤖"):
+        placeholder = st.empty()
+        placeholder.markdown("_正在检索文档..._")
 
-        log_qa(question, answer, [d.page_content[:80] for d in retrieved], elapsed)
+        t0 = time.time()
+        try:
+            from src.retrieval.pipeline import retrieve_with_pipeline
+            from src.generation.answer_gen import generate_answer
 
-    except Exception as e:
-        st.error(f"处理出错：{e}")
+            retrieved = retrieve_with_pipeline(prompt, vs, bm25)
+            placeholder.markdown("_正在生成答案..._")
+            answer = generate_answer(prompt, retrieved)
+            elapsed = time.time() - t0
 
-# 页脚
-st.markdown("---")
-st.caption("ServiceRAG · 复星旅文集团")
+            placeholder.markdown(answer)
+
+            sources_full = [doc.page_content[:400] for doc in retrieved]
+            with st.expander(f"📎 引用来源（{len(retrieved)}条）"):
+                for i, src in enumerate(sources_full):
+                    st.markdown(f'<div class="source-detail"><b>来源 {i+1}</b><br>{src}</div>',
+                                unsafe_allow_html=True)
+
+            st.markdown(f'<div class="meta-line">⏱ {elapsed:.1f}s</div>',
+                        unsafe_allow_html=True)
+
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": answer,
+                "sources": sources_full,
+                "elapsed": f"{elapsed:.1f}",
+            })
+
+            log_qa(prompt, answer, [s[:80] for s in sources_full], elapsed)
+
+        except Exception as e:
+            placeholder.error(f"处理出错：{e}")
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": f"❌ 处理出错：{e}",
+            })
